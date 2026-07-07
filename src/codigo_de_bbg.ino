@@ -32,6 +32,7 @@ const int xshutPins[]     = {5, 6, 7}; //Digital pins for each sensor r - f - l
 const uint8_t addresses[] = {0x30, 0x31, 0x32};  // Define unique I2C addresses for each sensor. Make sure these addresses do not conflict with other I2C devices
 
 const int keyPin = 9; //pin 9 for button
+const int keyLed = 13;  //key press validation.
 
 //L298 Control pins
 const int ENA = 10;  // PWM speed
@@ -226,6 +227,7 @@ void setup()
   delay(1000);//wait for a second
  
   pinMode(keyPin,INPUT);//initialize the key pin as input
+  pinMode(keyLed, OUTPUT);
 
   pinMode(ENA, OUTPUT);
   pinMode(IN1, OUTPUT);
@@ -254,14 +256,14 @@ void setup()
   for (int i = 0; i < s_count; i++) {
   sensors[i].startContinuous();
   }
-  run = true;   //true -> false
+  //run = true;   //true -> false
 }
 
 
 void loop()
 {
   stop();
- 
+  digitalWrite(keyLed, LOW);
   while (!run)    // starting button
   {
  
@@ -269,13 +271,15 @@ void loop()
       {
         stop();
         run = true; //validate the starting button
+        digitalWrite(keyLed, HIGH);
+        delay(1000);
         break;
       }
     else
       run = false;
      
     Serial.write("\nWaiting button...");
-    delay(500);
+    delay(100);
   }
  
     while (false)
