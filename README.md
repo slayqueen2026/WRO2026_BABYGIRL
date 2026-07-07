@@ -1,43 +1,27 @@
-Engineering materials
-====
-This are the material that were used for the development of this project:
+# HA_LEGACY - WRO Future Engineers 2026
 
-1. x2 sensor holders
-2. camera holder
-3. L289N DC motor controller holder
-4. arduino r4 holder
-5. printed circuit board holder
-6. arduino nicla holder
-7. dc motor holder
-8. servo motor holder
-9. x4 Hex coupler connector
-10. x5 wheels
-11. x2 Axle carriers
-12. x2 meal shaft
-13. L289N DC motor controller
-14. DC motor
-15. MG996R Servo motor
-16. Arduino UNO R4
-17. x2 VL53L0 Laser sensor
-18. Wires
-19. Printed Circuit board
-20. Pins
-21. Arduino nicla
-22. x4 resistors 10k
-23. x2 mosfet 27000n
-24. button
+## 1. Introduction & Team Information
+**Team Profile**  
+Team name: HA_LEGACY  
+Country: Panama  
+Memebers: Bianca Polato and Samira Santos  
+Coach: Julian Vigl 
 
+**Project Abstract**  
+Our vehicle is built around a single design principle: predictability under randomness. Since the Future Engineers track layout changes before every run, our code prioritizes a tight, consistent turning radius over raw top speed, using a 4-wheel Ackermann steering system tuned for repeatable cornering rather than aggressive acceleration. Our core performance objectives are completing all laps in the Open Challenge without a single wall touch,  reacting to obstacle pillars within 200ms of detection, and executing a reliable parallel-parking maneuver from any starting position within the parking zone.  
+  
+To handle the dynamic track, the car relies on a laser distance sensor. Rather than hard-coding a single path, our control software recalculates its steering target every frame based on live sensor input, which lets the same code handle any track configuration presented on competition day.
 
+## 2. Mobility & Mechanical Design    
+For our car, we chose Ackermann steering over differential drive because it more closely mirrors real car dynamics and gave us a smaller, more predictable turning radius on the tight obstacle-course corners. The chassis is mainly built from lego, but connective pieces were made for vertain electronic elements made form PETG. Early prototypes used smaller wheel in the back for balance, but this made the car have less traction in the rear of the car; we disassembled a toy moster truck and used its wheels, which imrpoved significatly the rear traction meaning the wheel would not skid along the track.    
+  
+Our drive system runs on three 9V batteries wired in series, supplying roughly 27V to the DC motor for stronger torque and faster acceleration out of corners. We chose series over parallel because our early low-voltage tests showed the motor struggling to accelerate quickly enough after obstacle maneuvers, and the added voltage solved this without needing a different motor. Because series wiring raises voltage rather than current capacity, we're aware our runtime per battery set is limited, so we carry spares and swap packs between test rounds rather than relying on one set all day. The motor circuit is kept fully separate from our logic circuit, which runs off its own regulated 5V line off a separate small battery, so voltage drops or noise from the motor don't reset or interfere with the sensors.
 
-## Introduction
-
-The robot moves using a DC motor controlled by an H-bridge motor driver. It uses three pins, IN1, IN2, and ENA, to set the direction and speed. The move() function allows the robot to go forward or backward, while the stop() function cuts the power to the motor to make it stop. This setup gives the robot basic but effective movement control, allowing it to travel through its environment smoothly.The robot is powered by a VEX 7.2V rechargeable battery. This battery is strong and reliable, designed for student robotics. It can power the motors and the electronics at the same time without losing voltage. The battery is rechargeable, safe, and long-lasting, which makes it perfect for classroom or project use. 
-
-
-The speed of the motor is controlled using the analogWrite() function on the ENA pin. This uses a method called PWM (pulse width modulation), which lets the robot change speed without turning the motor completely on or off. The code also uses the absolute value of the speed and checks the direction so that negative numbers make the motor move in reverse without causing errors. This makes the robot's movement flexible and safe.
-
-To complete the obstacle course, the system integrates the Arduino Nicla Sense ME. Communication between the Nicla and the main Arduino R4 is achieved through I2C, with the Nicla acting as a slave and the R4 as the master. Since the Nicla operates at 3.3V and the R4 at 5V, two level shifters are used—one for the SDA line and another for the SCL line—to safely handle voltage differences between the boards. This setup allows the Nicla to process sensor data or perform onboard computation while maintaining synchronized communication with the main controller during the robot’s operation.
-
-
-
-
+ ## 3. Systems Thinking & Engineering Decisions
+Midway through prototyping, we experimented with replacing our DC motor with a stepper motor, expecting its precise step control to make speed and distance more predictable for lane-following. During testing, the stepper motor ran inconsistently, it would sometimes fail to respond at all, other times stutter or stall unexpectedly, even when our code hadn't changed between runs. We checked our wiring and driver connections multiple times but couldn't consistently reproduce the failure or pin down whether the issue was a loose connection, an underpowered driver, or a wiring mistake in our setup.  
+  
+Rather than lose more build time chasing an intermittent hardware fault we couldn't isolate, we made the call to revert to our original DC motor design, which we knew worked reliably from earlier testing. This let us get back to consistent driving behavior and refocus our remaining time on tuning rather than debugging an unclear connection issue. To get the torque we needed out of the DC motor for sharp cornering, we wired three 9V batteries in series for roughly 27V, which gave us the acceleration we were originally hoping the stepper motor would provide.  
+  
+As a team, we also decided to reposition our sensors, moving them from their original location closer to the front wheels. With the sensors originally mounted further back, there was a noticeable delay between a turn appearing in the sensor's field of view and the car actually reacting to it, since the car had already moved closer to the turn by the time the data was processed. Moving the sensors nearer the front wheels shortened that distance between detection and reaction, giving the car more time to adjust and resulting in noticeably smoother, more accurate cornering. This was a unanimous decision after comparing test runs before and after the change, since the improvement in turning behavior was immediately obvious on the track.
+  
+The trade-off in both cases was giving up a more "ideal" solution, a precise stepper motor and a centrally located sensor layout, in favor of configurations that were less theoretically optimal but more reliable and effective in practice, a reasonable call given our timeline and testing constraints.
