@@ -45,6 +45,7 @@ const int TURNING_SPEED = 125;
 char  side        = ' '; //para decir hacia adonde va la vuelta
 short corners     = 0; // variable for coner counting
 int   actual_Dist = 0;
+int   prev_Dist = 0;
 bool  run         = false;
 char round_type = 'f';    //round type 'f'ree round 'n'on free round.
 
@@ -111,7 +112,7 @@ double dist (int space) // looks at the sensor distance
   move(DEFAULT_SPEED);
   delay(2500);
   myservo.write(side=='r'? MAX_ANGLE: MIN_ANGLE);
-  delay (600);
+  delay (800);
   myservo.write(CENTER_ANGLE);
   while (dist(side == 'l'? l: r) > 500)
     {
@@ -119,6 +120,31 @@ double dist (int space) // looks at the sensor distance
     continue;
     }
   Serial.println ("OUT corner ");
+}
+
+
+
+void pre_side_def() // tells you to which side you have to turn
+{
+ 
+  side =' ';
+  while (side == ' ')
+  {
+   move(DEFAULT_SPEED);
+   Ldist = dist(l);
+   Rdist = dist(r);
+   Fdist = dist(f);
+   Serial.println("LRF");
+   Serial.println(Ldist);
+   Serial.println(Rdist);
+   Serial.println(Fdist);
+      if ((Ldist > 1000) || (Rdist > 1000))
+      {
+            stop();
+            side = (Ldist > 1000? 'l': 'r');
+            Serial.println(side);
+      }
+  }
 }
 
 int calculatePID(double current_distance, char side) {
@@ -175,33 +201,10 @@ int calculateP(double current_distance, char side) {
     return constrain(target_angle, MIN_ANGLE, MAX_ANGLE);
 }
 
-void pre_side_def() // tells you to which side you have to turn
-{
- 
-  side =' ';
-  while (side == ' ')
-  {
-   move(DEFAULT_SPEED);
-   Ldist = dist(l);
-   Rdist = dist(r);
-   Fdist = dist(f);
-   Serial.println("LRF");
-   Serial.println(Ldist);
-   Serial.println(Rdist);
-   Serial.println(Fdist);
-      if ((Ldist > 1000) || (Rdist > 1000))
-      {
-            stop();
-            side = (Ldist > 1000? 'l': 'r');
-            Serial.println(side);
-      }
-  }
-}
-
 void free_round() //Stop instead of turn free round
 {
   corners = 0;
-
+  prev_Dist = (side == 'l') ? dist(l) : dist(r);
   while (corners < 12)
   {
     move(DEFAULT_SPEED);
@@ -209,18 +212,46 @@ void free_round() //Stop instead of turn free round
     actual_Dist = (side == 'l') ? dist(l) : dist(r);
 
 
-    if (actual_Dist > 1000)
+    if (actual_Dist > 500)
       {
         stop();
         turn();
       }  
+     
+    if (side == 'l')
+        {
+          actual_Dist = dist(l);
+          while (actual_Dist < 1000)
+          {
+            actual_Dist = dist(l);
+            if (actual_Dist < 150)  
+              myservo.write(MIN_ANGLE);
+            else if (actual_Dist > 200)
+              myservo.write(MAX_ANGLE);
+            delay (250);
+            myservo.write(CENTER_ANGLE);
+          }
+        }
     else
-      {    
+        {
+          actual_Dist = dist(r);
+          while (actual_Dist < 1000)
+          {
+            actual_Dist = dist(r);
+            if (actual_Dist < 150)  
+              myservo.write(MAX_ANGLE);
+            else if (actual_Dist > 200)
+              myservo.write(MIN_ANGLE);
+            delay (250);
+            myservo.write(CENTER_ANGLE);
+          }
         // Control PID normal
-        int servoPos = calculatePID(actual_Dist, side);
+        /*int servoPos = calculatePID(actual_Dist, side);
         myservo.write(servoPos);
+        */
         //Serial.println(servoPos);
       }
+    prev_Dist = actual_Dist;
   }
   stop();
 }
@@ -243,10 +274,6 @@ void non_free_round()
     if (Wire.available() == sizeof(VisionData)) {
       // Read the incoming bytes directly into the struct
       Wire.readBytes((byte*)&visionData, sizeof(VisionData));
-      Serial.println(visionData.linear_distance);
-      Serial.println(visionData.green_width);
-      Serial.println(+ visionData.red_width);
-      continue;
 
 
       Fdist = visionData.linear_distance;
@@ -350,6 +377,8 @@ Serial.write("end");
 
 void loop()
 {
+
+
   stop();
   digitalWrite(keyLed, LOW);
   while (!run)    // starting button
